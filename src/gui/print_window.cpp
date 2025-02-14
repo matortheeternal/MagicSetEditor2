@@ -143,7 +143,8 @@ void CardsPrintout::drawCard(DC& dc, const CardP& card, int card_nr) {
   int w = int(stylesheet.card_width), h = int(stylesheet.card_height); // in pixels
   if (is_rad90(rotation)) swap(w,h);
   // Draw using text buffer
-  double zoom = IsPreview() ? 1 : 4;
+  bool isPreview = IsPreview();
+  double zoom = isPreview ? 1 : 4;
   wxBitmap buffer(w*zoom,h*zoom,32);
   wxMemoryDC bufferDC;
   bufferDC.SelectObject(buffer);
@@ -157,7 +158,7 @@ void CardsPrintout::drawCard(DC& dc, const CardP& card, int card_nr) {
   dc.SetUserScale(scale_x / px_per_mm, scale_y / px_per_mm);
   dc.SetDeviceOrigin(int(scale_x * pos.x), int(scale_y * pos.y));
   bufferDC.SelectObject(wxNullBitmap);
-  dc.DrawBitmap(buffer, 0, 0);
+  dc.DrawBitmap(buffer, isPreview ? 0 : int(scale_x * pos.x), isPreview ? 0 : int(scale_y * pos.y));
 }
 
 // ----------------------------------------------------------------------------- : PrintWindow
