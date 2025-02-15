@@ -26,7 +26,8 @@ public:
   // layout
   RealSize page_size;      ///< Size of a page (in millimetres)
   RealSize card_size;      ///< Size of a card (in millimetres)
-  RealSize card_spacing;    ///< Spacing between cards (in millimetres)
+  RealSize card_spacing;   ///< Spacing between cards (in millimetres)
+  double card_dpi;         ///< Dots per inch of the default stylesheet
   double margin_left, margin_right, margin_top, margin_bottom; ///< Page margins (in millimetres)
   int rows, cols;        ///< Number of rows/columns of cards
   bool card_landscape;    ///< Are cards rotated to landscape orientation?
