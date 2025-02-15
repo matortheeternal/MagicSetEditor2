@@ -30,6 +30,7 @@ void PageLayout::init(const StyleSheet& stylesheet, PageLayoutType type, const R
   margin_left = margin_right = margin_top = margin_bottom = 0;
   card_size.width  = stylesheet.card_width  * 25.4 / stylesheet.card_dpi;
   card_size.height = stylesheet.card_height * 25.4 / stylesheet.card_dpi;
+  card_dpi = stylesheet.card_dpi;
   card_landscape = card_size.width > card_size.height;
   cols = int(floor(page_size.width  / card_size.width));
   rows = int(floor(page_size.height / card_size.height));
@@ -119,13 +120,15 @@ bool CardsPrintout::OnPrintPage(int page) {
 }
 
 void CardsPrintout::drawCard(DC& dc, const CardP& card, int card_nr) {
+  const StyleSheet& stylesheet = job->set->stylesheetFor(card);
+  // determine dpi factor for this card
+  double dpi_factor = stylesheet.card_dpi / job->layout.card_dpi;
   // determine position
   int col = card_nr % job->layout.cols;
   int row = card_nr / job->layout.cols;
-  RealPoint pos( job->layout.margin_left + (job->layout.card_size.width  + job->layout.card_spacing.width)  * col
-               , job->layout.margin_top  + (job->layout.card_size.height + job->layout.card_spacing.height) * row);
+  RealPoint pos((job->layout.margin_left + (job->layout.card_size.width  + job->layout.card_spacing.width)  * col) * dpi_factor
+               ,(job->layout.margin_top  + (job->layout.card_size.height + job->layout.card_spacing.height) * row) * dpi_factor);
   // determine rotation
-  const StyleSheet& stylesheet = job->set->stylesheetFor(card);
   Radians rotation = 0;
   if ((stylesheet.card_width > stylesheet.card_height) != job->layout.card_landscape) {
     rotation = rad90;
@@ -143,8 +146,7 @@ void CardsPrintout::drawCard(DC& dc, const CardP& card, int card_nr) {
   int w = int(stylesheet.card_width), h = int(stylesheet.card_height); // in pixels
   if (is_rad90(rotation)) swap(w,h);
   // Draw using text buffer
-  bool isPreview = IsPreview();
-  double zoom = isPreview ? 1 : 4;
+  double zoom = 4;
   wxBitmap buffer(w*zoom,h*zoom,32);
   wxMemoryDC bufferDC;
   bufferDC.SelectObject(buffer);
@@ -156,9 +158,9 @@ void CardsPrintout::drawCard(DC& dc, const CardP& card, int card_nr) {
   // render buffer to device
   double px_per_mm = zoom * stylesheet.card_dpi / 25.4;
   dc.SetUserScale(scale_x / px_per_mm, scale_y / px_per_mm);
-  dc.SetDeviceOrigin(int(scale_x * pos.x), int(scale_y * pos.y));
+  dc.SetDeviceOrigin(0, 0);
   bufferDC.SelectObject(wxNullBitmap);
-  dc.DrawBitmap(buffer, isPreview ? 0 : int(scale_x * pos.x), isPreview ? 0 : int(scale_y * pos.y));
+  dc.DrawBitmap(buffer, int(scale_x * pos.x), int(scale_y * pos.y));
 }
 
 // ----------------------------------------------------------------------------- : PrintWindow
