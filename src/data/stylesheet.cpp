@@ -36,10 +36,14 @@ StyleSheetP StyleSheet::byGameAndName(const Game& game, const String& name) {
     }
   } catch (PackageNotFoundError& e) {
     queue_message(MESSAGE_ERROR, _("Missing stylesheet: ") + full_name);
-    if (stylesheet_for_reading()) {
-      // we already have a stylesheet higher up, so just return a null pointer
-      return StyleSheetP();
-    }
+
+    // This causes a freeze when the set contains two cards that use the same missing StyleSheet, and the second one has styling_data
+    // Also, it's probably better to ask the user for an alternative for each missing StyleSheet individually
+    //if (stylesheet_for_reading()) {
+    //  // we already have a stylesheet higher up, so just return a null pointer
+    //  return StyleSheetP();
+    //}
+    
     // load an alternative stylesheet
     StyleSheetP ss = select_stylesheet(game, name);
     if (ss) {
