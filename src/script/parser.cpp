@@ -182,6 +182,17 @@ void TokenIterator::readToken() {
   } else if (isSpace(c)) {
     ++pos;
     // ignore
+  } else if (is_substr(pos, end, "include localized file:")) {
+    pos += 23; // "include localized file:"
+    const char* newlines = "\r\n";
+    auto eol = find_first_of(pos, end, newlines, newlines + 2);
+    String include_file = trim(StringView(pos, eol)) + _("_") + settings.locale;
+    // include_file("filename_en")
+    addToken(TOK_NAME, "include_file", pos - 23);
+    addToken(TOK_LPAREN, "(", pos);
+    addToken(TOK_STRING, include_file, pos);
+    addToken(TOK_RPAREN, ")", eol);
+    pos = eol;
   } else if (is_substr(pos, end, "include file:")) {
     pos += 13; // "include file:"
     const char* newlines = "\r\n";

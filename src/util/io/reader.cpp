@@ -12,6 +12,7 @@
 #include <util/error.hpp>
 #include <util/io/package_manager.hpp>
 #include <boost/logic/tribool.hpp>
+#include <data/settings.hpp>
 #undef small
 using boost::tribool;
 
@@ -355,6 +356,10 @@ template <> void Reader::handle(Vector2D& vec) {
 
 template <> void Reader::handle(LocalFileName& f) {
   f = LocalFileName::fromReadString(this->getValue());
+}
+
+String Reader::addLocale(String filename) {
+  return filename + _("_") + settings.locale;
 }
 
 // ----------------------------------------------------------------------------- : EnumReader

@@ -117,6 +117,8 @@ public:
   /// The package being read from
   inline Packaged* getPackage() const { return package; }
   
+  String addLocale(String);
+
 private:
   // --------------------------------------------------- : Data
   /// App version this file was made with
@@ -175,7 +177,8 @@ private:
   /** Maybe the key is "include file" */
   template <typename T>
   void unknownKey(T& v) {
-    if (key == _("include_file")) {
+    if (key == _("include_file") || key == _("include_localized_file")) {
+      value = key == _("include_localized_file") ? addLocale(value) : value;
       auto [stream, include_package] = openFileFromPackage(package, value);
       Reader sub_reader(*stream, include_package, value, ignore_invalid);
       if (sub_reader.file_app_version == 0) {
