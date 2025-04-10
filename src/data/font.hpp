@@ -46,9 +46,13 @@ public:
   double             shadow_blur;          ///< Blur radius of the shadow
   Color              separator_color;      ///< Color for <sep> text
   int                flags;                ///< FontFlags for this font
-  
+
   Font();
-  
+
+  /// Load fonts (.ttf or .otf) from the given directory and its subdirectories, returns true if there were errors
+  static bool PreloadResourceFonts(String fontsDirectoryPath, bool recursive);
+  /// Adds font file paths from the given directory into fontFilePaths
+  static void TallyResourceFonts(String fontsDirectoryPath, vector<String>& fontFilePaths, bool recursive);
   /// Update the scritables, returns true if there is a change
   bool update(Context& ctx);
   /// Add the given dependency to the dependent_scripts list for the variables this font depends on
@@ -64,7 +68,7 @@ public:
   
   /// Convert this font to a wxFont
   wxFont toWxFont(double scale) const;
-  
+
 private:
   DECLARE_REFLECTION();
 };

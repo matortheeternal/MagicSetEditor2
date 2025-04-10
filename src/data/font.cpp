@@ -8,6 +8,9 @@
 
 #include <util/prec.hpp>
 #include <data/font.hpp>
+#include <wx/stdpaths.h>
+#include <wx/dir.h>
+#include <wx/font.h>
 
 // ----------------------------------------------------------------------------- : Font
 
@@ -23,6 +26,51 @@ Font::Font()
   , separator_color(Color(0,0,0,128))
   , flags(FONT_NORMAL)
 {}
+
+bool Font::PreloadResourceFonts(String fontsDirectoryPath, bool recursive) {
+#if wxUSE_PRIVATE_FONTS
+  String pathSeparator(wxFileName::GetPathSeparator());
+  String appPath( wxFileName(wxStandardPaths::Get().GetExecutablePath()).GetPath() );
+  fontsDirectoryPath = appPath + pathSeparator + fontsDirectoryPath + (fontsDirectoryPath.EndsWith(pathSeparator) ? wxEmptyString : pathSeparator);
+
+  if (!wxDirExists(fontsDirectoryPath)) return false;
+  
+  // tally fonts
+  vector<String> fontFilePaths;
+  TallyResourceFonts(fontsDirectoryPath, fontFilePaths, recursive);
+  if (fontFilePaths.size() == 0) return false;
+
+  // load fonts
+  bool preloadHadErrors = false;
+  for (String fontFilePath : fontFilePaths) {
+    if (!wxFont::AddPrivateFont(fontFilePath)) {
+      preloadHadErrors = true;
+    }
+  }
+
+  return preloadHadErrors;
+
+#endif // wxUSE_PRIVATE_FONTS
+  return false;
+}
+
+void Font::TallyResourceFonts(String fontsDirectoryPath, vector<String>& fontFilePaths, bool recursive) {
+  wxDir fontsDirectory(fontsDirectoryPath);
+  String fontFileName = wxEmptyString;
+  bool hasNext = fontsDirectory.GetFirst(&fontFileName);
+  while (hasNext) {
+    String fontFilePath = fontsDirectoryPath + fontFileName;
+    if (wxDirExists(fontFilePath)) {
+      if (recursive) {
+        TallyResourceFonts(fontFilePath + wxFileName::GetPathSeparator(), fontFilePaths, true);
+      }
+    }
+    else if (fontFilePath.EndsWith(_(".ttf")) || fontFilePath.EndsWith(_(".otf"))) {
+      fontFilePaths.push_back(fontFilePath);
+    }
+    hasNext = fontsDirectory.GetNext(&fontFileName);
+  }
+}
 
 bool Font::update(Context& ctx) {
   bool changes = false;
