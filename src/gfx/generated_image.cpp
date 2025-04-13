@@ -14,6 +14,7 @@
 #include <data/field/symbol.hpp>
 #include <render/symbol/filter.hpp>
 #include <gui/util.hpp> // load_resource_image
+#include <wx/wfstream.h>
 
 // ----------------------------------------------------------------------------- : GeneratedImage
 
@@ -527,4 +528,49 @@ bool ImageValueToImage::operator == (const GeneratedImage& that) const {
   const ImageValueToImage* that2 = dynamic_cast<const ImageValueToImage*>(&that);
   return that2 && filename == that2->filename
                && age      == that2->age;
+}
+
+// ----------------------------------------------------------------------------- : ExternalImage
+
+Image ExternalImage::generate(const Options& opt) const {
+  wxFileName fname(filepath, wxPATH_UNIX);
+  String filePathString = fname.GetAbsolutePath();
+
+  // has a pre-existing .mse-set file been loaded? 
+  if (opt.local_package->needSaveAs()) throw ScriptError(_ERROR_1_("can't import image without set", filePathString));
+
+  // does the file pointed to by filepath exist?
+  if (!fname.FileExists()) throw ScriptError(_ERROR_1_("import not found", filePathString));
+
+  String fileExt = fname.GetExt();
+  wxBitmapType bitmapType;
+  if      (fileExt == _("png"))                         bitmapType = wxBITMAP_TYPE_PNG;
+  else if (fileExt == _("jpg") || fileExt == _("jpeg")) bitmapType = wxBITMAP_TYPE_JPEG;
+  else                                                  bitmapType = wxBITMAP_TYPE_BMP;
+
+  // does the file exist in the package?
+  String fileNameNoExtension = fname.GetName();
+  if (!opt.local_package->existsIn(fileNameNoExtension)) {
+    auto outStream = opt.local_package->openOut(fileNameNoExtension);
+    wxFileInputStream inStream = wxFileInputStream(filepath.ToStdString());
+    if (!inStream.IsOk()) throw ScriptError(_ERROR_1_("can't create file stream", filePathString));
+    outStream->Write(inStream);
+    if (!outStream->IsOk()) throw ScriptError(_ERROR_1_("can't write image to set", filePathString));
+    outStream->Close();
+  }
+
+  // save the package with the new image
+  opt.local_package->save(false);
+
+  auto imageInputStream = opt.local_package->openIn(fileNameNoExtension);
+  Image img(*imageInputStream.get(), bitmapType);
+
+  if (!img.IsOk()) throw ScriptError(_ERROR_1_("can't import image", filePathString));
+
+  return img;
+}
+
+bool ExternalImage::operator == (const GeneratedImage& that) const {
+  const ExternalImage* that2 = dynamic_cast<const ExternalImage*>(&that);
+  return that2 && that2->filepath == filepath;
 }

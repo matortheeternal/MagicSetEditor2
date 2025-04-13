@@ -14,6 +14,7 @@
 #include <data/field/choice.hpp>
 #include <data/field/package_choice.hpp>
 #include <data/field/color.hpp>
+#include <data/field/image.hpp>
 #include <data/game.hpp>
 #include <data/card.hpp>
 #include <util/error.hpp>
@@ -33,7 +34,7 @@ SCRIPT_FUNCTION(new_card) {
     // find value to update
     IndexMap<FieldP,ValueP>::const_iterator value_it = new_card->data.find(name);
     if (value_it == new_card->data.end()) {
-      throw ScriptError(format_string(_("Card doesn't have a field named '%s'"),name));
+      throw ScriptError(_ERROR_1_("no field with name", name));
     }
     Value* value = value_it->get();
     // set the value
@@ -45,8 +46,11 @@ SCRIPT_FUNCTION(new_card) {
       pvalue->package_name = v->toString();
     } else if (ColorValue* cvalue = dynamic_cast<ColorValue*>(value)) {
       cvalue->value = v->toColor();
+    } else if (ImageValue* ivalue = dynamic_cast<ImageValue*>(value)) {
+      wxFileName fname( static_cast<ExternalImage*>(v.get())->toString() );
+      ivalue->filename = LocalFileName::fromReadString( fname.GetName(), "");
     } else {
-      throw ScriptError(format_string(_("Can not set value '%s', it is not of the right type"),name));
+      throw ScriptError(_ERROR_1_("can't set value", name));
     }
   }
   SCRIPT_RETURN(new_card);

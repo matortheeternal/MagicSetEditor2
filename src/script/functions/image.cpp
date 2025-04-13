@@ -19,6 +19,7 @@
 #include <data/format/formats.hpp>
 #include <gfx/generated_image.hpp>
 #include <render/symbol/filter.hpp>
+#include <cli/text_io_handler.hpp> // for MSE_CLI
 
 void parse_enum(const String&, ImageCombine& out);
 
@@ -42,6 +43,15 @@ SCRIPT_FUNCTION(to_card_image) {
     // Use the provided (or defaulted) Zoom and Angle.
     return make_intrusive<ArbitraryImage>(export_bitmap(set, input, (zoom / 100), deg_to_rad(angle)).ConvertToImage());
   }
+}
+
+SCRIPT_FUNCTION(import_image) {
+  SCRIPT_PARAM(Set*, set);
+  SCRIPT_PARAM(String, input);
+  auto extImg = make_intrusive<ExternalImage>(input);
+  if (cli.haveConsole()) // makes sure generate() is called, but only once, when using the CLI
+    extImg->generate(GeneratedImage::Options(0, 0, set->stylesheet.get(), set));
+  return extImg;
 }
 
 // ----------------------------------------------------------------------------- : Image functions
@@ -269,4 +279,5 @@ void init_script_image_functions(Context& ctx) {
   ctx.setVariable(_("drop_shadow"),      script_drop_shadow);
   ctx.setVariable(_("symbol_variation"), script_symbol_variation);
   ctx.setVariable(_("built_in_image"),   script_built_in_image);
+  ctx.setVariable(_("import_image"),     script_import_image);
 }
