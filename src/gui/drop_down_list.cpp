@@ -29,7 +29,7 @@ private:
   bool ProcessEvent(wxEvent& ev) override {
     int t = ev.GetEventType();
     if ( t == wxEVT_LEFT_DOWN      || t == wxEVT_RIGHT_DOWN
-      || t == wxEVT_MOVE           || t == wxEVT_SIZE
+      || t == wxEVT_MOVE
       || t == wxEVT_MENU_HIGHLIGHT || t == wxEVT_MENU_OPEN    || t == wxEVT_MENU_OPEN
       || t == wxEVT_ACTIVATE       || t == wxEVT_CLOSE_WINDOW || t == wxEVT_KILL_FOCUS
       || t == wxEVT_COMMAND_TOOL_CLICKED)
