@@ -64,7 +64,7 @@ static void set_container(Value* container, ScriptValueP& value, String key_name
 static bool set_builtin_container(GameP& game, CardP& card, ScriptValueP& value, String key_name) {
   // check if the given value is for a built-in field, if found set it and return true
   key_name = unified_form(key_name);
-  if (key_name == _("notes")) {
+  if (key_name == _("notes") || key_name == _("note")) {
     card->notes = value->toString();
     return true;
   } else if (key_name == _("style") || key_name == _("stylesheet") || key_name == _("template")) {

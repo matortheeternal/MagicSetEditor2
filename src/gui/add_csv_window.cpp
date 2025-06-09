@@ -124,6 +124,7 @@ void AddCSVWindow::onOk(wxCommandEvent&) {
   auto in = std::ifstream(file_path->GetValue().ToStdString());
   if (in.fail()) {
     queue_message(MESSAGE_ERROR, _ERROR_("add card csv file not found"));
+    EndModal(wxID_ABORT);
     return;
   }
   std::vector<std::vector<std::string>> table;
@@ -141,6 +142,7 @@ void AddCSVWindow::onOk(wxCommandEvent&) {
   for (int y = 1; y < table.size(); ++y) {
     if (table[y].size() != count) {
       queue_message(MESSAGE_ERROR, _ERROR_1_("add card csv file malformed", wxString::Format(wxT("%i"), y+1)));
+      EndModal(wxID_ABORT);
       return;
     }
   }
