@@ -39,7 +39,7 @@ CardsPanel::CardsPanel(Window* parent, int id)
   notes       = new TextCtrl(nodes_panel, ID_NOTES, true);
   collapse_notes = new HoverButton(nodes_panel, ID_COLLAPSE_NOTES, _("btn_collapse"), Color(), false);
   collapse_notes->SetExtraStyle(wxWS_EX_PROCESS_UI_UPDATES);
-  filter    = nullptr;
+  filter      = nullptr;
   editor->next_in_tab_order = card_list;
   // init sizer for notes panel
   wxSizer* sn = new wxBoxSizer(wxVERTICAL);
@@ -69,12 +69,13 @@ CardsPanel::CardsPanel(Window* parent, int id)
     add_menu_item_tr(menuCard, ID_CARD_NEXT, nullptr, "next card");
     add_menu_item_tr(menuCard, ID_CARD_SEARCH, nullptr, "search cards");
     menuCard->AppendSeparator();
-    add_menu_item_tr(menuCard, ID_CARD_ADD, "card_add", "add_card");
     insertManyCardsMenu = add_menu_item_tr(menuCard, ID_CARD_ADD_MULT, "card_add_multiple", "add cards");
     // NOTE: space after "Del" prevents wx from making del an accellerator
     // otherwise we delete a card when delete is pressed inside the editor
     // Adding a space never hurts, please keep it just to be safe.
     add_menu_item(menuCard, ID_CARD_ADD_CSV, "card_add_multiple", _MENU_("add card csv") + _(" "), _HELP_("add card csv"));
+    add_menu_item(menuCard, ID_CARD_ADD_JSON, "card_add_multiple", _MENU_("add card json") + _(" "), _HELP_("add card json"));
+    add_menu_item_tr(menuCard, ID_CARD_ADD, "card_add", "add_card");
     add_menu_item(menuCard, ID_CARD_REMOVE, "card_del", _MENU_("remove card")+_(" "), _HELP_("remove card"));
     menuCard->AppendSeparator();
     auto menuRotate = new wxMenu();
@@ -98,6 +99,30 @@ CardsPanel::CardsPanel(Window* parent, int id)
     menuFormat->Append(insertSymbolMenu);
   
   toolAddCard = nullptr;
+}
+
+void CardsPanel::updateCardCounts() {
+  if (counts) {
+    if (card_list && set) {
+      int selected = card_list->GetSelectedItemCount();
+      int filtered = card_list->GetItemCount();
+      int total = set->cards.size();
+      if (filtered == total) {
+        counts->SetLabel(_TOOL_2_("card counts 2",
+          wxString::Format(wxT("%i"), selected),
+          wxString::Format(wxT("%i"), total)));
+      }
+      else {
+        counts->SetLabel(_TOOL_3_("card counts 3",
+          wxString::Format(wxT("%i"), selected),
+          wxString::Format(wxT("%i"), filtered),
+          wxString::Format(wxT("%i"), total)));
+      }
+      
+    } else {
+      counts->SetLabel(_(""));
+    }
+  }
 }
 
 void CardsPanel::updateNotesPosition() {
@@ -205,9 +230,12 @@ void CardsPanel::initUI(wxToolBar* tb, wxMenuBar* mb) {
   // Filter/search textbox
   tb->AddSeparator();
   assert(!filter);
-  filter = new FilterCtrl(tb, ID_CARD_FILTER, _LABEL_("search cards"), _HELP_("search_cards_control"));
+  filter = new FilterCtrl(tb, ID_CARD_FILTER, _TOOL_("search cards"), _HELP_("search cards control"));
   filter->setFilter(filter_value);
   tb->AddControl(filter);
+  counts = new wxStaticText(tb, ID_CARD_COUNTER, _(""));
+  updateCardCounts();
+  tb->AddControl(counts);
   tb->Realize();
   // Menus
   mb->Insert(2, menuCard,   _MENU_("cards"));
@@ -224,6 +252,7 @@ void CardsPanel::destroyUI(wxToolBar* tb, wxMenuBar* mb) {
   tb->DeleteTool(ID_CARD_ADD);
   tb->DeleteTool(ID_CARD_REMOVE);
   tb->DeleteTool(ID_CARD_ROTATE);
+  tb->DeleteTool(ID_CARD_COUNTER);
   // remember the value in the filter control, because the card list remains filtered
   // the control is destroyed by DeleteTool
   filter_value = filter->getFilterString();
@@ -283,6 +312,7 @@ void CardsPanel::onUpdateUI(wxUpdateUIEvent& ev) {
     }
 #endif
   }
+  updateCardCounts();
 }
 
 void CardsPanel::onMenuOpen(wxMenuEvent& ev) {
@@ -314,6 +344,9 @@ void CardsPanel::onCommand(int id) {
       break;
     case ID_CARD_ADD_CSV:
       card_list->doAddCSV();
+      break;
+    case ID_CARD_ADD_JSON:
+      card_list->doAddJSON();
       break;
     case ID_CARD_REMOVE:
       card_list->doDelete();
