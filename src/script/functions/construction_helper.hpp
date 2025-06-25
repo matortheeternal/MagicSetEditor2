@@ -83,7 +83,7 @@ static bool set_builtin_container(GameP& game, CardP& card, ScriptValueP& value,
 }
 
 static bool check_table_headers(GameP& game, std::vector<String>& headers, const String& file_extension, String& missing_fields_out) {
-  if (headers.size() == 0) {
+  if (headers.empty()) {
     queue_message(MESSAGE_ERROR, _("Empty headers given"));
     return false;
   }
