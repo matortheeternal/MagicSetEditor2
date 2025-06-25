@@ -125,7 +125,7 @@ static bool cards_from_table(SetP& set, vector<String>& headers, std::vector<std
   int count = headers.size();
   for (int y = 0; y < table.size(); ++y) {
     if (table[y].size() != count) {
-      queue_message(MESSAGE_ERROR, _ERROR_2_("import file malformed", file_extension, wxString::Format(wxT("%i"), y+1)));
+      queue_message(MESSAGE_ERROR, _ERROR_1_("add card csv file malformed", wxString::Format(wxT("%i"), y+1)));
       return false;
     }
   }
