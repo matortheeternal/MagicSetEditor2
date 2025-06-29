@@ -107,6 +107,17 @@ void CardsPanel::updateCardCounts() {
       int selected = card_list->GetSelectedItemCount();
       int filtered = card_list->GetItemCount();
       int total = set->cards.size();
+
+      if (
+            selected_cards_count == selected
+        &&  filtered_cards_count == filtered
+        &&  total_cards_count == total
+      ) return;
+
+      selected_cards_count = selected;
+      filtered_cards_count = filtered;
+      total_cards_count = total;
+
       if (filtered == total) {
         counts->SetLabel(_TOOL_2_("card counts 2",
           wxString::Format(wxT("%i"), selected),
