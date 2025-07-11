@@ -318,6 +318,193 @@ bool ResizeImage::operator == (const GeneratedImage& that) const {
     && height == that2->height;
 }
 
+// ----------------------------------------------------------------------------- : BleedEdgedImage
+
+Image BleedEdgedImage::generate(const Options& opt) const {
+  // create enlarged image
+  Image base_img = base_image->generate(opt);
+  int w = base_img.GetWidth(), h = base_img.GetHeight();
+  if (w <= 0 || h <= 0) {
+    queue_message(MESSAGE_ERROR, _("Cannot add bleed edge to empty image"));
+    return base_img;
+  }
+  bool is_landscape = w > h;
+  int dw = int(w * (horizontal_size > 0.0 ? horizontal_size : is_landscape ? 0.037 : 0.048));
+  int dh = int(h * (vertical_size > 0.0 ? vertical_size : is_landscape ? 0.048 : 0.037));
+  if (dw <= 0 && dh <= 0) {
+    return base_img;
+  }
+  int width = w + dw + dw, height = h + dh + dh;
+  UInt size = width * height;
+  Image img = wxImage(width, height, false);
+  img.InitAlpha();
+  Byte* data = img.GetData();
+  Byte* alpha = img.GetAlpha();
+  // fill with background color
+  for (UInt i = 0; i < size; ++i) {
+    data[3 * i + 0] = background_color.Red();
+    data[3 * i + 1] = background_color.Green();
+    data[3 * i + 2] = background_color.Blue();
+    alpha[i] = background_color.Alpha();
+  }
+  // paste original image
+  img.Paste(base_img, dw, dh, wxIMAGE_ALPHA_BLEND_COMPOSE);
+  // fill top left corner
+  int pixel;
+  int x_start = 0;
+  int y_start = 0;
+  int ref = dw + dh * width;
+  for (int y = 0; y < dh; ++y) {
+    for (int x = 0; x < dw; ++x) {
+      pixel = x_start + x + (y_start + y) * width;
+      data[3 * pixel + 0] = data[3 * ref + 0];
+      data[3 * pixel + 1] = data[3 * ref + 1];
+      data[3 * pixel + 2] = data[3 * ref + 2];
+      alpha[pixel] = alpha[ref];
+    }
+  }
+  // fill top right corner
+  x_start = width - dw;
+  y_start = 0;
+  ref = x_start - 1 + dh * width;
+  for (int y = 0; y < dh; ++y) {
+    for (int x = 0; x < dw; ++x) {
+      pixel = x_start + x + (y_start + y) * width;
+      data[3 * pixel + 0] = data[3 * ref + 0];
+      data[3 * pixel + 1] = data[3 * ref + 1];
+      data[3 * pixel + 2] = data[3 * ref + 2];
+      alpha[pixel] = alpha[ref];
+    }
+  }
+  // fill bottom left corner
+  x_start = 0;
+  y_start = height - dh;
+  ref = dw + (y_start - 1) * width;
+  for (int y = 0; y < dh; ++y) {
+    for (int x = 0; x < dw; ++x) {
+      pixel = x_start + x + (y_start + y) * width;
+      data[3 * pixel + 0] = data[3 * ref + 0];
+      data[3 * pixel + 1] = data[3 * ref + 1];
+      data[3 * pixel + 2] = data[3 * ref + 2];
+      alpha[pixel] = alpha[ref];
+    }
+  }
+  // fill bottom right corner
+  x_start = width - dw;
+  y_start = height - dh;
+  ref = (x_start - 1) + (y_start - 1) * width;
+  for (int y = 0; y < dh; ++y) {
+    for (int x = 0; x < dw; ++x) {
+      pixel = x_start + x + (y_start + y) * width;
+      data[3 * pixel + 0] = data[3 * ref + 0];
+      data[3 * pixel + 1] = data[3 * ref + 1];
+      data[3 * pixel + 2] = data[3 * ref + 2];
+      alpha[pixel] = alpha[ref];
+    }
+  }
+  // fill left border
+  x_start = 0;
+  y_start = dh;
+  for (int y = 0; y < height - dh - dh; ++y) {
+    ref = dw + (y_start + y) * width;
+    for (int x = 0; x < dw; ++x) {
+      pixel = x_start + x + (y_start + y) * width;
+      data[3 * pixel + 0] = data[3 * ref + 0];
+      data[3 * pixel + 1] = data[3 * ref + 1];
+      data[3 * pixel + 2] = data[3 * ref + 2];
+      alpha[pixel] = alpha[ref];
+    }
+  }
+  // fill top border
+  x_start = dw;
+  y_start = 0;
+  for (int y = 0; y < dh; ++y) {
+    for (int x = 0; x < width - dw - dw; ++x) {
+      pixel = x_start + x + (y_start + y) * width;
+      ref = x_start + x + dh * width;
+      data[3 * pixel + 0] = data[3 * ref + 0];
+      data[3 * pixel + 1] = data[3 * ref + 1];
+      data[3 * pixel + 2] = data[3 * ref + 2];
+      alpha[pixel] = alpha[ref];
+    }
+  }
+  // fill right border
+  x_start = width - dw;
+  y_start = dh;
+  for (int y = 0; y < height - dh - dh; ++y) {
+    ref = width - dw - 1 + (y_start + y) * width;
+    for (int x = 0; x < dw; ++x) {
+      pixel = x_start + x + (y_start + y) * width;
+      data[3 * pixel + 0] = data[3 * ref + 0];
+      data[3 * pixel + 1] = data[3 * ref + 1];
+      data[3 * pixel + 2] = data[3 * ref + 2];
+      alpha[pixel] = alpha[ref];
+    }
+  }
+  // fill bottom border
+  x_start = dw;
+  y_start = height - dh;
+  for (int y = 0; y < dh; ++y) {
+    for (int x = 0; x < width - dw - dw; ++x) {
+      pixel = x_start + x + (y_start + y) * width;
+      ref = x_start + x + (height - dh - 1) * width;
+      data[3 * pixel + 0] = data[3 * ref + 0];
+      data[3 * pixel + 1] = data[3 * ref + 1];
+      data[3 * pixel + 2] = data[3 * ref + 2];
+      alpha[pixel] = alpha[ref];
+    }
+  }
+  // done
+  return img;
+}
+bool BleedEdgedImage::operator == (const GeneratedImage& that) const {
+  const BleedEdgedImage* that2 = dynamic_cast<const BleedEdgedImage*>(&that);
+  return that2 && *base_image == *that2->base_image
+    && horizontal_size == that2->horizontal_size
+    && vertical_size == that2->vertical_size
+    && background_color == that2->background_color;
+}
+
+// ----------------------------------------------------------------------------- : InsertedImage
+
+Image InsertedImage::generate(const Options& opt) const {
+  Image base_img =     base_image->generate(opt);
+  Image inserted_img = inserted_image->generate(opt);
+  int base_x =     offset_x < 0 ? -offset_x : 0;
+  int base_y =     offset_y < 0 ? -offset_y : 0;
+  int inserted_x = offset_x < 0 ? 0         : offset_x;
+  int inserted_y = offset_y < 0 ? 0         : offset_y;
+  int width =  max(base_x + base_img.GetWidth(),  inserted_x + inserted_img.GetWidth());
+  int height = max(base_y + base_img.GetHeight(), inserted_y + inserted_img.GetHeight());
+  UInt size = width * height;
+  Image img = wxImage(width, height, false);
+  img.InitAlpha();
+  Byte* data = img.GetData();
+  Byte* alpha = img.GetAlpha();
+  for (UInt i = 0; i < size; ++i) {
+    data[0] = background_color.Red();
+    data[1] = background_color.Green();
+    data[2] = background_color.Blue();
+    data += 3;
+    alpha[0] = background_color.Alpha();
+    alpha += 1;
+  }
+  img.Paste(base_img, base_x, base_y, wxIMAGE_ALPHA_BLEND_COMPOSE);
+  img.Paste(inserted_img, inserted_x, inserted_y, wxIMAGE_ALPHA_BLEND_COMPOSE);
+  return img;
+}
+ImageCombine InsertedImage::combine() const {
+  return base_image->combine();
+}
+bool InsertedImage::operator == (const GeneratedImage& that) const {
+  const InsertedImage* that2 = dynamic_cast<const InsertedImage*>(&that);
+  return that2
+    && *base_image == *that2->base_image
+    && *inserted_image == *that2->inserted_image
+    && offset_x == that2->offset_x
+    && offset_y == that2->offset_y;
+}
+
 // ----------------------------------------------------------------------------- : CropImage
 
 Image CropImage::generate(const Options& opt) const {

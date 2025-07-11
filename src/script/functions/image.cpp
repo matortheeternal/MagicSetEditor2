@@ -70,6 +70,15 @@ SCRIPT_FUNCTION(height_of) {
   SCRIPT_RETURN(image.GetHeight());
 }
 
+SCRIPT_FUNCTION(insert_image) {
+  SCRIPT_PARAM(GeneratedImageP, base_image);
+  SCRIPT_PARAM(GeneratedImageP, inserted_image);
+  SCRIPT_PARAM(int, offset_x);
+  SCRIPT_PARAM(int, offset_y);
+  SCRIPT_OPTIONAL_PARAM_(Color, background_color);
+  return make_intrusive<InsertedImage>(base_image, inserted_image, offset_x, offset_y, background_color);
+}
+
 SCRIPT_FUNCTION(linear_blend) {
   SCRIPT_PARAM(GeneratedImageP, image1);
   SCRIPT_PARAM(GeneratedImageP, image2);
@@ -142,6 +151,14 @@ SCRIPT_FUNCTION(enlarge) {
   SCRIPT_PARAM_C(GeneratedImageP, input);
   SCRIPT_PARAM(double, border_size);
   return make_intrusive<EnlargeImage>(input, border_size);
+}
+
+SCRIPT_FUNCTION(add_bleed_edge) {
+  SCRIPT_PARAM_C(GeneratedImageP, input);
+  SCRIPT_PARAM_DEFAULT(double, horizontal_size, -1.0);
+  SCRIPT_PARAM_DEFAULT(double, vertical_size, -1.0);
+  SCRIPT_OPTIONAL_PARAM_(Color, background_color);
+  return make_intrusive<BleedEdgedImage>(input, horizontal_size, vertical_size, background_color);
 }
 
 SCRIPT_FUNCTION(resize_image) {
@@ -263,6 +280,7 @@ void init_script_image_functions(Context& ctx) {
   ctx.setVariable(_("linear_blend"),     script_linear_blend);
   ctx.setVariable(_("masked_blend"),     script_masked_blend);
   ctx.setVariable(_("combine_blend"),    script_combine_blend);
+  ctx.setVariable(_("insert_image"),     script_insert_image);
   ctx.setVariable(_("set_mask"),         script_set_mask);
   ctx.setVariable(_("set_alpha"),        script_set_alpha);
   ctx.setVariable(_("set_combine"),      script_set_combine);
@@ -270,6 +288,7 @@ void init_script_image_functions(Context& ctx) {
   ctx.setVariable(_("invert_image"),     script_invert_image);
   ctx.setVariable(_("recolor_image"),    script_recolor_image);
   ctx.setVariable(_("enlarge"),          script_enlarge);
+  ctx.setVariable(_("add_bleed_edge"),   script_add_bleed_edge);
   ctx.setVariable(_("resize_image"),     script_resize_image);
   ctx.setVariable(_("crop"),             script_crop);
   ctx.setVariable(_("flip_horizontal"),  script_flip_horizontal);
