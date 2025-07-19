@@ -96,6 +96,9 @@ $built_in_functions = array(
 	'built_in_image'	=>'',
 	// cards
 	'new_card'		=>'',
+	'add_card_to_set'		=>'',
+	'get_card_styling'		=>'',
+	'get_card_stylesheet'		=>'',
 	// html export
 	'to_html'		=>'',
 	'symbols_to_html'	=>'',
