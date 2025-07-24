@@ -296,6 +296,7 @@ void Settings::read() {
     if (!file.Ok()) return; // failure is not an error
     Reader reader(file, nullptr, filename);
     reader.handle_greedy(*this);
+    if (locale.Trim().empty()) locale = _("en");
   }
 }
 
