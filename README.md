@@ -7,7 +7,7 @@ More information on https://magicseteditor.boards.net/
 ## Dependencies
 
 The code depends on
- * wxWidgets >= 3.0
+ * wxWidgets >= 3.3.1
  * boost
  * hunspell
 
@@ -25,7 +25,7 @@ On windows, the program can be compiled with Visual Studio (recommended) or with
 ````
 and/or
 ````
-.\vcpkg install pkgconf wxwidgets boost-smart-ptr boost-regex boost-logic boost-pool boost-iterator boost-json hunspell --triplet=x86-windows-static
+.\vcpkg install pkgconf wxwidgets[fonts] boost-smart-ptr boost-regex boost-logic boost-pool boost-iterator boost-json hunspell --triplet=x86-windows-static
 ````
 then, regardless of your choice
 ````
