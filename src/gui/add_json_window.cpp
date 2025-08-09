@@ -139,14 +139,14 @@ void AddJSONWindow::onBrowseFiles(wxCommandEvent&) {
     queue_message(MESSAGE_ERROR, _ERROR_("add card json empty array"));
     return false;
   }
-  auto& card = card_array[0];
-  if (!card.is_object()) {
+  const auto& first_card = card_array[0];
+  if (!first_card.is_object()) {
     queue_message(MESSAGE_ERROR, _ERROR_("add card json path not valid"));
     return false;
   }
   // Get headers
   for (int i = 0; i < count; ++i) {
-    auto& card = card_array[i].as_object();
+    const auto& card = card_array[i].as_object();
     for (auto it = card.begin(); it != card.end(); ++it) {
       boost::json::string_view jview = it->key();
       std::string_view stdview = std::string_view(jview.data(), jview.size());
@@ -162,7 +162,7 @@ void AddJSONWindow::onBrowseFiles(wxCommandEvent&) {
     std::vector<ScriptValueP> row;
     auto& card = card_array[i].as_object();
     for (int h = 0; h < headers_out.size(); ++h) {
-      auto& value = card[headers_out[h].ToStdString()];
+      const auto& value = card[headers_out[h].ToStdString()];
       row.push_back(json_to_mse(value, set.get()));
     }
     table_out.push_back(row);
@@ -174,7 +174,7 @@ void AddJSONWindow::onOk(wxCommandEvent&) {
   /// Perform the import
   wxBusyCursor wait;
   // Read the file
-  auto file = std::ifstream(file_path->GetValue().ToStdString());
+  auto& file = std::ifstream(file_path->GetValue().ToStdString());
   if (file.fail()) {
     queue_message(MESSAGE_ERROR, _ERROR_("add card json file not found"));
     EndModal(wxID_ABORT);

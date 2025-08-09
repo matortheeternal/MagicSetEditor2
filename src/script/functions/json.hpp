@@ -25,7 +25,7 @@
 
 // ----------------------------------------------------------------------------- : JSON to String
 
-inline static void pretty_print(std::ostream& os, boost::json::value const& jv, std::string* indent = nullptr)
+inline static void pretty_print(std::ostream& os, const boost::json::value& jv, std::string* indent = nullptr)
 {
   std::string indent_;
   if(! indent)
@@ -106,21 +106,21 @@ inline static void pretty_print(std::ostream& os, boost::json::value const& jv, 
     os << "\n";
 }
 
-inline static String json_pretty_print(boost::json::value const& jv, std::string* indent = nullptr) {
+inline static String json_pretty_print(const boost::json::value& jv, std::string* indent = nullptr) {
   std::ostringstream stream;
   pretty_print(stream, jv, indent);
   String string = wxString(stream.str().c_str());
   return string;
 }
 
-inline static String json_ugly_print(boost::json::value const& jv) {
+inline static String json_ugly_print(const boost::json::value& jv) {
   String string = wxString(boost::json::serialize(jv).c_str());
   return string;
 }
 
 // ----------------------------------------------------------------------------- : JSON to MSE
 
-inline static ScriptValueP json_to_mse(boost::json::value& jv, Set* set);
+inline static ScriptValueP json_to_mse(const boost::json::value& jv, Set* set);
 
 template <typename T>
 static void read(T& out, boost::json::object& jv, const char value_name[]) {
@@ -301,7 +301,7 @@ inline static SetP json_to_mse_set(boost::json::object& jv) {
   return set;
 }
 
-inline static ScriptValueP json_to_mse(boost::json::value& jv, Set* set) {
+inline static ScriptValueP json_to_mse(const boost::json::value& jv, Set* set) {
   if (jv == nullptr) return script_nil;
   else if (jv.is_null()) return script_nil;
   else if (jv.is_bool()) return to_script(jv.get_bool());
@@ -358,7 +358,7 @@ inline static ScriptValueP json_to_mse(boost::json::value& jv, Set* set) {
     return script_nil;
   }
 }
-inline static ScriptValueP json_to_mse(String& string, Set* set) {
+inline static ScriptValueP json_to_mse(const String& string, Set* set) {
   try {
     boost::system::error_code ec;
     boost::json::parse_options options;
@@ -372,7 +372,7 @@ inline static ScriptValueP json_to_mse(String& string, Set* set) {
     return script_nil;
   }
 }
-inline static ScriptValueP json_to_mse(ScriptValueP& sv, Set* set) {
+inline static ScriptValueP json_to_mse(const ScriptValueP& sv, Set* set) {
   try {
     String string = sv->toString();
     return json_to_mse(string, set);
@@ -386,7 +386,7 @@ inline static ScriptValueP json_to_mse(ScriptValueP& sv, Set* set) {
 // ----------------------------------------------------------------------------- : MSE to JSON
 
 template <typename T>
-static void write(boost::json::object& out, const String& name, T& value) {
+static void write(boost::json::object& out, const String& name, const T& value) {
   wxStringOutputStream stream;
   Writer writer(stream);
   writer.indentation = -1000;
