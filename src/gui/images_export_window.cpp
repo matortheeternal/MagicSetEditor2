@@ -65,7 +65,7 @@ void ImagesExportWindow::onOk(wxCommandEvent&) {
   if (name.empty()) return;
   settings.default_export_dir = wxPathOnly(name);
   // Export
-  export_images(set, getSelection(), name, gs.images_export_filename, gs.images_export_conflicts);
+  export_image(set, getSelection(), name, gs.images_export_filename, gs.images_export_conflicts);
   // Done
   EndModal(wxID_OK);
 }

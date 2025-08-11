@@ -71,7 +71,6 @@ CardsDataObject::CardsDataObject(const SetP& set, const vector<CardP>& cards) {
   }
   WrappedCards data = { set->game.get(), set->game->name(), cards };
   SetText(serialize_for_clipboard(*set, data));
-  queue_message(MESSAGE_WARNING, GetText());
   // restore cards
   for (size_t i = 0 ; i < cards.size() ; ++i) {
     if (has_styling[i]) {
@@ -147,9 +146,6 @@ CardsOnClipboard::CardsOnClipboard(const SetP& set, const vector<CardP>& cards) 
     }
     else if (cards.size() < 6) {
       Add(new wxImageDataObject(export_image(set, cards, true, 0, 1.0, 0.0)));
-    }
-    else if (cards.size() < 6) {
-      Add(new wxBitmapDataObject(export_bitmap(set, cards, true, 0, 1.0, 0.0)));
     }
   // Conversion to serialized card format
     Add(new CardsDataObject(set, cards), true);

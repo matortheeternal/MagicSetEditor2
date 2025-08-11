@@ -19,8 +19,6 @@
 #include <render/card/viewer.hpp>
 #include <wx/filename.h>
 
-#define wxIMAGE_OPTION_PNG_DESCRIPTION wxString("PngDescription")
-
 // ----------------------------------------------------------------------------- : Card export
 
 class UnzoomedDataViewer : public DataViewer {
@@ -101,7 +99,6 @@ Bitmap export_bitmap(const SetP& set, const CardP& card, const double zoom, cons
   return bitmap;
 }
 
-// put multiple card images into one bitmap
 Bitmap export_bitmap(const SetP& set, const vector<CardP>& cards, bool scale_to_lowest_dpi, int padding, const double zoom, const Radians angle_radians) {
   if (!set) throw Error(_("no set"));
   vector<Bitmap> bitmaps;
@@ -186,7 +183,7 @@ void export_image(const SetP& set, const CardP& card, const String& filename) {
                           // but image.saveFile determines it automagicly
 }
 
-void export_images(const SetP& set, const vector<CardP>& cards,
+void export_image(const SetP& set, const vector<CardP>& cards,
                    const String& path, const String& filename_template, FilenameConflicts conflicts)
 {
   wxBusyCursor busy;
