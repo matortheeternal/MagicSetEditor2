@@ -113,9 +113,14 @@ Style::Style(const FieldP& field)
   , visible(true)
   , automatic_side(AUTO_UNKNOWN)
   , content_dependent(false)
-{}
+{
+  field->styleP = this;
+}
 
-Style::~Style() {}
+Style::~Style()
+{
+  fieldP->styleP = nullptr;
+}
 
 IMPLEMENT_REFLECTION(Style) {
   REFLECT(z_index);
@@ -133,6 +138,7 @@ IMPLEMENT_REFLECTION(Style) {
 
 void init_object(const FieldP& field, StyleP& style) {
   if (!style) style = field->newStyle();
+  field->styleP = style;
 }
 template <> StyleP read_new<Style>(Reader&) {
   throw InternalError(_("IndexMap contains nullptr StyleP the application should have crashed already"));
@@ -260,6 +266,18 @@ void Style::markDependencyMember(const String& name, const Dependency& dep) cons
 
 void mark_dependency_member(const Style& style, const String& name, const Dependency& dep) {
   style.markDependencyMember(name,dep);
+}
+
+String Style::getRect() {
+  return _("---") +
+         wxString::Format(wxT("%i"), (int)(left)) +
+         _("-") +
+         wxString::Format(wxT("%i"), (int)(top)) +
+         _("-") +
+         wxString::Format(wxT("%i"), (int)(width)) +
+         _("-") +
+         wxString::Format(wxT("%i"), (int)(height)) +
+         _("---");
 }
 
 // ----------------------------------------------------------------------------- : StyleListener

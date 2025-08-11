@@ -71,6 +71,7 @@ CardsDataObject::CardsDataObject(const SetP& set, const vector<CardP>& cards) {
   }
   WrappedCards data = { set->game.get(), set->game->name(), cards };
   SetText(serialize_for_clipboard(*set, data));
+  queue_message(MESSAGE_WARNING, GetText());
   // restore cards
   for (size_t i = 0 ; i < cards.size() ; ++i) {
     if (has_styling[i]) {
@@ -140,12 +141,12 @@ KeywordP KeywordDataObject::getKeyword(const SetP& set) {
 // ----------------------------------------------------------------------------- : Card on clipboard
 
 CardsOnClipboard::CardsOnClipboard(const SetP& set, const vector<CardP>& cards) {
-  // Conversion to text format
-    // TODO
-    //Add( new TextDataObject(_("card"))) 
-  // Conversion to bitmap format
+  // Conversion to image format
     if (cards.size() == 1) {
-      Add(new wxBitmapDataObject(export_bitmap(set, cards[0])));
+      Add(new wxImageDataObject(export_image(set, cards[0])));
+    }
+    else if (cards.size() < 6) {
+      Add(new wxImageDataObject(export_image(set, cards, true, 0, 1.0, 0.0)));
     }
     else if (cards.size() < 6) {
       Add(new wxBitmapDataObject(export_bitmap(set, cards, true, 0, 1.0, 0.0)));
