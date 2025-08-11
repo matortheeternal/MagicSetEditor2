@@ -23,7 +23,6 @@ On windows, the program can be compiled with Visual Studio (recommended) or with
  * Download and install [vcpkg](https://github.com/microsoft/vcpkg)
  * Use vcpkg to install pkgconf, wxwidgets, boost, hunspell:
 
-=======
 ````
 .\vcpkg install pkgconf wxwidgets[fonts] boost-smart-ptr boost-regex boost-logic boost-pool boost-iterator boost-json hunspell --triplet=x64-windows-static
 ````
