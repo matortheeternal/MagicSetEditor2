@@ -10,6 +10,7 @@
 #include <gui/control/card_list.hpp>
 #include <gui/control/card_list_column_select.hpp>
 #include <gui/set/window.hpp> // for sorting all cardlists in a window
+#include <gui/card_link_window.hpp>
 #include <gui/util.hpp>
 #include <gui/add_csv_window.hpp>
 #include <gui/add_json_window.hpp>
@@ -25,6 +26,7 @@
 #include <data/action/value.hpp>
 #include <util/window_id.hpp>
 #include <wx/clipbrd.h>
+#include <unordered_set>
 
 DECLARE_POINTER_TYPE(ChoiceValue);
 
@@ -157,6 +159,31 @@ bool CardListBase::doCopy() {
   wxTheClipboard->Close();
   return ok;
 }
+bool CardListBase::doCopyCardAndLinkedCards() {
+  if (!canCopy()) return false;
+  vector<CardP> cards_selected;
+  getSelection(cards_selected);
+  if (cards_selected.size() < 1) return false;
+  if (!wxTheClipboard->Open()) return false;
+  vector<CardP> cards_to_copy;
+  unordered_set<CardP> cards_already_added;
+  FOR_EACH(card, cards_selected) {
+    if (cards_already_added.find(card) == cards_already_added.end()) {
+      cards_to_copy.push_back(card);
+      cards_already_added.insert(card);
+    }
+    vector<pair<CardP, String>> linked_cards = card->getLinkedCards(*set);
+    FOR_EACH(linked_card, linked_cards) {
+      if (cards_already_added.find(linked_card.first) == cards_already_added.end()) {
+        cards_to_copy.push_back(linked_card.first);
+        cards_already_added.insert(linked_card.first);
+      }
+    }
+  }
+  bool ok = wxTheClipboard->SetData(new CardsOnClipboard(set, cards_to_copy)); // ignore result
+  wxTheClipboard->Close();
+  return ok;
+}
 bool CardListBase::doPaste() {
   // get data
   if (!canPaste()) return false;
@@ -183,6 +210,25 @@ bool CardListBase::doDelete() {
   return true;
 }
 
+// --------------------------------------------------- : CardListBase : Card linking
+
+bool CardListBase::canLink() const {
+  vector<CardP> selected_cards;
+  getSelection(selected_cards);
+  return selected_cards.size() == 1;
+}
+bool CardListBase::doLink() {
+  CardLinkWindow wnd(this, set, getCard());
+  if (wnd.ShowModal() == wxID_OK) {
+    // The actual linking is done in this window's onOk function
+    return true;
+  }
+  return false;
+}
+bool CardListBase::doUnlink(CardP unlinked_card) {
+  set->actions.addAction(make_unique<UnlinkCardsAction>(*set, getCard(), unlinked_card));
+  return true;
+}
 bool CardListBase::doAddCSV() {
   AddCSVWindow wnd(this, set, true);
   if (wnd.ShowModal() == wxID_OK) {
@@ -412,10 +458,12 @@ void CardListBase::onContextMenu(wxContextMenuEvent&) {
     wxMenu m;
     add_menu_item_tr(&m, wxID_CUT, "cut", "cut_card");
     add_menu_item_tr(&m, wxID_COPY, "copy", "copy_card");
+    add_menu_item_tr(&m, ID_CARD_AND_LINK_COPY, "card_copy", "copy card and links");
     add_menu_item_tr(&m, wxID_PASTE, "paste", "paste_card");
     m.AppendSeparator();
     add_menu_item_tr(&m, ID_CARD_ADD, "card_add", "add card");
     add_menu_item_tr(&m, ID_CARD_REMOVE, "card_del", "remove card");
+    add_menu_item_tr(&m, ID_CARD_LINK, "card_link", "link card");
     PopupMenu(&m);
   }
 }

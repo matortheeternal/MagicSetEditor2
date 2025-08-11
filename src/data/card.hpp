@@ -17,10 +17,14 @@
 class Game;
 class Dependency;
 class Keyword;
+DECLARE_POINTER_TYPE(Set);
 DECLARE_POINTER_TYPE(Card);
 DECLARE_POINTER_TYPE(Field);
 DECLARE_POINTER_TYPE(Value);
 DECLARE_POINTER_TYPE(StyleSheet);
+
+#define THIS_LINKED_PAIRS(var)              vector<pair<reference_wrapper<String>, reference_wrapper<String>>> var { make_pair(ref(linked_card_1), ref(linked_relation_1)), make_pair(ref(linked_card_2), ref(linked_relation_2)), make_pair(ref(linked_card_3), ref(linked_relation_3)), make_pair(ref(linked_card_4), ref(linked_relation_4)) }
+#define OTHER_LINKED_PAIRS(var, other_card) vector<pair<reference_wrapper<String>, reference_wrapper<String>>> var { make_pair(ref(other_card->linked_card_1), ref(other_card->linked_relation_1)), make_pair(ref(other_card->linked_card_2), ref(other_card->linked_relation_2)), make_pair(ref(other_card->linked_card_3), ref(other_card->linked_relation_3)), make_pair(ref(other_card->linked_card_4), ref(other_card->linked_relation_4)) }
 
 // ----------------------------------------------------------------------------- : Card
 
@@ -37,6 +41,18 @@ public:
   IndexMap<FieldP, ValueP> data;
   /// Notes for this card
   String notes;
+  /// Unique identifier for this card, so other cards can refer to it, and be linked to it
+  String uid;
+  /// Up to four uid of other cards, to encode relations such as front face/back face, or generator/token, etc...
+  String linked_card_1;
+  String linked_card_2;
+  String linked_card_3;
+  String linked_card_4;
+  /// Nature of the relatation with the respective linked card, such as back face, or token, etc...
+  String linked_relation_1;
+  String linked_relation_2;
+  String linked_relation_3;
+  String linked_relation_4;
   /// Time the card was created/last modified
   wxDateTime time_created, time_modified;
   /// Alternative style to use for this card
@@ -64,6 +80,17 @@ public:
   /// Does any field contains the given query string?
   bool contains(QuickFilterPart const& query) const;
   
+  /// Link or unlink other cards to this card
+  void link(const Set& set, const vector<CardP>& linked_cards, const String& selected_relation, const String& linked_relation);
+  void link(const Set& set, CardP& linked_card, const String& selected_relation, const String& linked_relation);
+  void unlink(const vector<CardP>& linked_cards);
+  pair<String, String> unlink(CardP& unlinked_card); // Returns the relations that were deleted, so we can undo
+
+  void copyLink(const Set& set, String old_uid, String new_uid);
+  void updateLink(String old_uid, String new_uid);
+
+  vector<pair<CardP, String>> getLinkedCards(const Set& set);
+
   /// Find a value in the data by name and type
   template <typename T> T& value(const String& name) {
     for(IndexMap<FieldP, ValueP>::iterator it = data.begin() ; it != data.end() ; ++it) {

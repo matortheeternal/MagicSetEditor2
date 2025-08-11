@@ -26,7 +26,6 @@
 #include <wx/wfstream.h>
 #include <boost/json.hpp>
 
-
 // ----------------------------------------------------------------------------- : Debugging
 
 SCRIPT_FUNCTION(get_mse_version) {
@@ -38,6 +37,10 @@ SCRIPT_FUNCTION(get_mse_path) {
   String app_folder = app_path.GetPath();
   app_folder.Replace("\\", "/");
   SCRIPT_RETURN(app_folder);
+}
+
+SCRIPT_FUNCTION(get_mse_locale) {
+  SCRIPT_RETURN(settings.locale);
 }
 
 SCRIPT_FUNCTION(trace) {
@@ -752,6 +755,45 @@ SCRIPT_FUNCTION(get_card_stylesheet) {
   throw ScriptError(_("invalid set or card argument"));
 }
 
+SCRIPT_FUNCTION(get_card_from_uid) {
+  SCRIPT_PARAM_C(Set*, set);
+  SCRIPT_PARAM_C(String, input);
+  FOR_EACH(other_card, set->cards) {
+    if (other_card->uid == input) SCRIPT_RETURN(other_card);
+  }
+  return script_nil;
+}
+
+SCRIPT_FUNCTION(get_card_from_link) {
+  SCRIPT_PARAM_C(Set*, set);
+  SCRIPT_PARAM_C(CardP, card);
+  SCRIPT_PARAM_C(String, input);
+  String trimmed_input = input.Trim().Trim(false);
+  String uid = card->linked_relation_1 == trimmed_input ? card->linked_card_1 :
+               card->linked_relation_2 == trimmed_input ? card->linked_card_2 :
+               card->linked_relation_3 == trimmed_input ? card->linked_card_3 :
+               card->linked_relation_4 == trimmed_input ? card->linked_card_4 :
+               wxEmptyString;
+  if (uid == wxEmptyString) return script_nil;
+  FOR_EACH(other_card, set->cards) {
+    if (other_card->uid == uid) SCRIPT_RETURN(other_card);
+  }
+  return script_nil;
+}
+
+SCRIPT_FUNCTION(has_link) {
+  SCRIPT_PARAM_C(CardP, card);
+  SCRIPT_PARAM_C(String, input);
+  String trimmed_input = input.Trim().Trim(false);
+  if (
+    card->linked_relation_1 == trimmed_input ||
+    card->linked_relation_2 == trimmed_input ||
+    card->linked_relation_3 == trimmed_input ||
+    card->linked_relation_4 == trimmed_input
+  ) SCRIPT_RETURN(true);
+  SCRIPT_RETURN(false);
+}
+
 // ----------------------------------------------------------------------------- : Keywords
 
 
@@ -826,6 +868,7 @@ SCRIPT_FUNCTION(rule) {
 void init_script_basic_functions(Context& ctx) {
   // debugging
   ctx.setVariable(_("get_mse_version"),      script_get_mse_version);
+  ctx.setVariable(_("get_mse_locale"),       script_get_mse_locale);
   ctx.setVariable(_("get_mse_path"),         script_get_mse_path);
   ctx.setVariable(_("trace"),                script_trace);
   ctx.setVariable(_("warning"),              script_warning);
@@ -891,6 +934,9 @@ void init_script_basic_functions(Context& ctx) {
   ctx.setVariable(_("random_shuffle"),       script_random_shuffle);
   ctx.setVariable(_("random_select"),        script_random_select);
   ctx.setVariable(_("random_select_many"),   script_random_select_many);
+  ctx.setVariable(_("get_card_from_uid"),    script_get_card_from_uid);
+  ctx.setVariable(_("get_card_from_link"),   script_get_card_from_link);
+  ctx.setVariable(_("has_link"),             script_has_link);
   // keyword
   ctx.setVariable(_("expand_keywords"),      script_expand_keywords);
   ctx.setVariable(_("expand_keywords_rule"), make_intrusive<ScriptRule>(script_expand_keywords));

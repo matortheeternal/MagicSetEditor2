@@ -13,6 +13,7 @@
 #include <data/pack.hpp>
 #include <data/stylesheet.hpp>
 #include <util/error.hpp>
+#include <util/uid.hpp>
 
 // ----------------------------------------------------------------------------- : Add card
 
@@ -36,9 +37,52 @@ String AddCardAction::getName(bool to_undo) const {
 }
 
 void AddCardAction::perform(bool to_undo) {
+  // If we are adding cards, resolve any uid conflicts
+  // (If we are re-adding cards, from a remove undo, there shouldn't be any uid conflicts)
+  // We always assume uid conflicts occur because a card was copy-pasted into the same set,
+  // and never because two different cards randomly got assigned the same uid
+  if (action.adding && !to_undo) {
+    // Tally existing unique ids
+    unordered_map<String, CardP> all_existing_uids;
+    FOR_EACH(card, set.cards) {
+      all_existing_uids.insert({ card->uid, card });
+    }
+    // Tally added unique ids
+    unordered_map<String, CardP> all_added_uids;
+    for (size_t pos = 0; pos < action.steps.size(); ++pos) {
+      CardP card = action.steps[pos].item;
+      all_added_uids.insert({ card->uid, card });
+    }
+    FOR_EACH(added_pair, all_added_uids) {
+      String old_uid = added_pair.first;
+      CardP added_card = added_pair.second;
+      // Assign new unique ids
+      if (all_existing_uids.find(old_uid) != all_existing_uids.end()) {
+        String new_uid = generate_uid();
+        added_card->uid = new_uid;
+        all_added_uids.insert({ new_uid, added_card });
+        // Update links on linked cards
+        OTHER_LINKED_PAIRS(linked_pairs, added_card);
+        FOR_EACH(linked_pair, linked_pairs) {
+          String& linked_uid = linked_pair.first.get();
+          String& linked_relation = linked_pair.second.get();
+          if (linked_uid == wxEmptyString) continue;
+          // If it's an added card, replace the link
+          if (all_added_uids.find(linked_uid) != all_added_uids.end()) {
+            all_added_uids.at(linked_uid)->updateLink(old_uid, new_uid);
+          }
+          // Otherwise, if it's an existing card, copy the link
+          else if (all_existing_uids.find(linked_uid) != all_existing_uids.end()) {
+            all_existing_uids.at(linked_uid)->copyLink(set, old_uid, new_uid);
+          }
+        }
+      }
+    }
+  }
+
+  // Add or remove cards
   action.perform(set.cards, to_undo);
 }
-
 
 // ----------------------------------------------------------------------------- : Reorder cards
 
@@ -55,11 +99,48 @@ void ReorderCardsAction::perform(bool to_undo) {
     assert(card_id1 < set.cards.size());
     assert(card_id2 < set.cards.size());
   #endif
-  if (card_id1 >= set.cards.size() || card_id2 < set.cards.size()) {
+  if (card_id1 >= set.cards.size() || card_id2 >= set.cards.size()) {
     // TODO : Too lazy to fix this right now.
     return;
   }
   swap(set.cards[card_id1], set.cards[card_id2]);
+}
+
+// ----------------------------------------------------------------------------- : Link cards
+
+LinkCardsAction::LinkCardsAction(Set& set, const CardP& selected_card, vector<CardP>& linked_cards, const String& selected_relation, const String& linked_relation)
+  : CardListAction(set), selected_card(selected_card), linked_cards(linked_cards), selected_relation(selected_relation), linked_relation(linked_relation)
+{}
+
+String LinkCardsAction::getName(bool to_undo) const {
+  return _("Link cards");
+}
+
+void LinkCardsAction::perform(bool to_undo) {
+  if (!to_undo) {
+    selected_card->link(set, linked_cards, selected_relation, linked_relation);
+  } else {
+    selected_card->unlink(linked_cards);
+  }
+}
+
+UnlinkCardsAction::UnlinkCardsAction(Set& set, const CardP& selected_card, CardP& unlinked_card)
+  : CardListAction(set), selected_card(selected_card), unlinked_card(unlinked_card)
+{}
+
+String UnlinkCardsAction::getName(bool to_undo) const {
+  return _("Unlink card");
+}
+
+void UnlinkCardsAction::perform(bool to_undo) {
+  if (!to_undo) {
+    pair<String, String> relations = selected_card->unlink(unlinked_card);
+    selected_relation = relations.first;
+    unlinked_relation = relations.second;
+  }
+  else {
+    selected_card->link(set, unlinked_card, selected_relation, unlinked_relation);
+  }
 }
 
 // ----------------------------------------------------------------------------- : Change stylesheet

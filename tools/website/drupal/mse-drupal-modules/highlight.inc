@@ -93,14 +93,19 @@ $built_in_functions = array(
 	'flip_vertical'		=>'',
 	'rotate'		=>'',
 	'drop_shadow'		=>'',
+	'insert_image'		=>'',
+	'dimensions_of'		=>'',
 	'symbol_variation'	=>'',
 	'import_image'	=>'',
 	'built_in_image'	=>'',
 	// cards
 	'new_card'		=>'',
-	'add_card_to_set'		=>'',
+	'has_link'		=>'',
+	'get_card_from_link'		=>'',
+	'get_card_from_uid'		=>'',
 	'get_card_styling'		=>'',
 	'get_card_stylesheet'		=>'',
+	'add_card_to_set'		=>'',
 	// html export
 	'to_html'		=>'',
 	'symbols_to_html'	=>'',
@@ -111,6 +116,7 @@ $built_in_functions = array(
 	'write_set_file'	=>'',
 	// other
 	'get_mse_version'			=>'',
+	'get_mse_locale'			=>'',
 	'get_mse_path'			=>'',
 	'trace'			=>'',
 	'assert'		=>'',

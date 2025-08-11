@@ -64,9 +64,9 @@ public:
   
   // --------------------------------------------------- : Selection
   
-  inline CardP getCard() const            { return static_pointer_cast<Card>(selected_item); }
-  inline void  setCard(const CardP& card) { selectItem(card, true, false); }
-    
+  inline CardP getCard() const                                { return static_pointer_cast<Card>(selected_item); }
+  inline void  setCard(const CardP& card, bool event = false) { selectItem(card, true, event); }
+  
   // --------------------------------------------------- : Clipboard
   
   bool canCut()    const override;
@@ -75,11 +75,18 @@ public:
   bool canDelete() const override;
   // Try to perform a clipboard operation, return success
   bool doCopy() override;
+  bool doCopyCardAndLinkedCards();
   bool doPaste() override;
   bool doDelete() override;
   bool doAddCSV();
   bool doAddJSON();
 
+  // --------------------------------------------------- : Card linking
+  
+  bool canLink()    const;
+  bool doLink();
+  bool doUnlink(CardP unlinked_card);
+  
   // --------------------------------------------------- : Set actions
   
   void onBeforeChangeSet() override;
@@ -107,7 +114,7 @@ protected:
   
   /// Send an 'item selected' event for the currently selected item (selected_item)
   void sendEvent() override { sendEvent(EVENT_CARD_SELECT); }
-  void sendEvent(int type = EVENT_CARD_SELECT);
+  void sendEvent(int type);
   /// Compare cards
   bool compareItems(void* a, void* b) const override;
   
