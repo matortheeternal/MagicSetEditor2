@@ -102,6 +102,11 @@ void GameSettings::initDefaults(const Game& game) {
       auto_replaces.push_back(ar);
     }
   }
+  // make sure things aren't in a problematic state
+  for (auto it = cardlist_columns.begin(); it != cardlist_columns.end(); ++it) {
+    if (it->second.width < 20) it->second.width = 20;
+  }
+  if (images_export_filename.Trim().empty()) images_export_filename = _("{card.name}.png");
 }
 
 IMPLEMENT_REFLECTION_NO_SCRIPT(GameSettings) {
@@ -161,6 +166,14 @@ IMPLEMENT_REFLECTION_ENUM(CutterLinesType) {
   VALUE_N("none",         CUTTER_NONE);
 }
 
+// ----------------------------------------------------------------------------- : Dark mode settings
+
+IMPLEMENT_REFLECTION_ENUM(DarkModeType) {
+  VALUE_N("yes",    DARKMODE_YES);
+  VALUE_N("system", DARKMODE_SYSTEM);
+  VALUE_N("no",     DARKMODE_NO);
+}
+
 // ----------------------------------------------------------------------------- : Settings
 
 Settings settings;
@@ -177,6 +190,7 @@ Settings::Settings()
   , symbol_grid_snap     (false)
   , print_spacing        (0.33)
   , print_cutter_lines   (CUTTER_ALL)
+  , dark_mode_type       (DARKMODE_SYSTEM)
   , internal_scale       (1.0)
   , internal_image_extension(true)
   #if USE_OLD_STYLE_UPDATE_CHECKER
@@ -249,6 +263,20 @@ String Settings::settingsFile() {
   return user_settings_dir() + _("mse.config");
 }
 
+bool Settings::darkMode() {
+  return wxSystemSettings::GetAppearance().IsDark();
+}
+
+String Settings::darkModePrefix() {
+  if (darkMode()) return _("dark_");
+  return _("");
+}
+
+Color Settings::darkModeColor() {
+  if (darkMode()) return wxColor(15,8,0);
+  return wxColor(240,247,255);
+}
+
 IMPLEMENT_REFLECTION_NO_SCRIPT(Settings) {
   REFLECT(locale);
   REFLECT(recent_sets);
@@ -267,6 +295,7 @@ IMPLEMENT_REFLECTION_NO_SCRIPT(Settings) {
   REFLECT(default_game);
   REFLECT(print_spacing);
   REFLECT(print_cutter_lines);
+  REFLECT(dark_mode_type);
   REFLECT(apprentice_location);
   REFLECT(internal_scale);
   REFLECT(internal_image_extension);
@@ -306,7 +335,12 @@ void Settings::read() {
     if (!file.Ok()) return; // failure is not an error
     Reader reader(file, nullptr, filename);
     reader.handle_greedy(*this);
+    // make sure things aren't in a problematic state
     if (locale.Trim().empty()) locale = _("en");
+    if (symbol_grid_size < 30) symbol_grid_size = 30;
+    if (internal_scale < 1.0) internal_scale = 1.0;
+    if (default_stylesheet_settings.card_zoom < 0.5) default_stylesheet_settings.card_zoom = 1.0;
+    if (default_stylesheet_settings.export_zoom < 0.5) default_stylesheet_settings.export_zoom = 1.0;
   }
 }
 
