@@ -15,7 +15,7 @@
 // ----------------------------------------------------------------------------- : About window
 
 AboutWindow::AboutWindow(Window* parent)
-  : wxDialog(parent, wxID_ANY, _TITLE_("about"), wxDefaultPosition, wxSize(510,340), wxCLIP_CHILDREN | wxDEFAULT_DIALOG_STYLE | wxTAB_TRAVERSAL)
+  : wxDialog(parent, wxID_ANY, _TITLE_("about"), wxDefaultPosition, wxSize(510,460), wxCLIP_CHILDREN | wxDEFAULT_DIALOG_STYLE | wxTAB_TRAVERSAL)
   , logo(load_resource_image(settings.darkModePrefix() + _("about")))
 {
   // init controls
