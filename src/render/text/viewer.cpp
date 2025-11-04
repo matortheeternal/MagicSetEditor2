@@ -560,6 +560,7 @@ bool TextViewer::prepareLinesAtScale(RotatedDC& dc, const vector<CharInfo>& char
 
   // The current "paragraph" in the input string
   size_t i_para = 0;
+  size_t current_para_start_line = 0;
   assert(elements.paragraphs.size() > 0);
 
   // first line
@@ -684,10 +685,30 @@ bool TextViewer::prepareLinesAtScale(RotatedDC& dc, const vector<CharInfo>& char
       if (line.break_after == LineBreak::LINE) line.line_height = 0;
       if (line.break_after >= LineBreak::HARD) {
         // end of paragraph
-        // look at next paragraph
         assert(elements.paragraphs[i_para].end == i + 1);
         assert(i_para + 1 < elements.paragraphs.size());
-        if (i_para+1 < elements.paragraphs.size()) ++i_para;
+
+        // enforce minimum height for paragraph
+        const TextParagraph& para = elements.paragraphs[i_para];
+        if (para.min_height > 0.0) {
+          double para_start_top =
+            (current_para_start_line < lines.size())
+            ? lines[current_para_start_line].top
+            : style.padding_top;
+
+          Line& last = lines.back();
+          double para_end_bottom = last.top + last.line_height;
+          double para_height = para_end_bottom - para_start_top;
+
+          if (para.min_height > 0.0 && para_height < para.min_height) {
+            double delta = para.min_height - para_height;
+            last.line_height += delta;
+            line.top += delta;
+          }
+        }
+        current_para_start_line = lines.size();
+
+        if (i_para + 1 < elements.paragraphs.size()) ++i_para;
         assert(elements.paragraphs[i_para].start == i + 1);
         line.margin_left = elements.paragraphs[i_para].margin_left;
         line.margin_right = elements.paragraphs[i_para].margin_right;
