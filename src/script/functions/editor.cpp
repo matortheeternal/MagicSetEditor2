@@ -137,7 +137,7 @@ static String handleEmpty(Context& ctx, vector<pair<String, bool>> &value_parts,
   return new_value;
 }
 
-static String recombineParts(Context &ctx, vector<pair<String, bool>> &value_parts, vector<String> &separators) {
+static String recombineParts(Context &ctx, vector<pair<String, bool>> &value_parts, vector<String> &separators, const vector<double>& minHeights = {}) {
   SCRIPT_PARAM_DEFAULT(bool, hide_when_empty, false);
   SCRIPT_PARAM_DEFAULT(bool, soft_before_empty, false);
   String new_value = value_parts.front().first;
@@ -158,7 +158,16 @@ static String recombineParts(Context &ctx, vector<pair<String, bool>> &value_par
       new_value += _("<sep>") + separators[i - 1] + _("</sep>");
       new_value_empty = false;
     }
-    new_value += value_parts[i].first;
+    if (i < minHeights.size() && minHeights[i] > 0.0) {
+      new_value += String::Format(
+        _("<min-height:%g>%s</min-height>"),
+        minHeights[i],
+        value_parts[i].first.c_str()
+      );
+    }
+    else {
+      new_value += value_parts[i].first;
+    }
   }
   if (!new_value_empty || !hide_when_empty)
     new_value = handleEmpty(ctx, value_parts, separators, new_value, size_before_last);
@@ -252,18 +261,38 @@ vector<String> readRepeatedSeparators(Context& ctx, const vector<TextValue*>& va
   return separators;
 }
 
+static vector<double> readMinHeightsArray(Context& ctx) {
+  vector<double> result;
+
+  SCRIPT_OPTIONAL_PARAM(ScriptValueP, min_heights) {
+    if (min_heights->type() != SCRIPT_COLLECTION) {
+      throw ScriptError(_("combined_editor_array: 'min_heights' must be an array of numbers"));
+    }
+
+    ScriptValueP it = min_heights->makeIterator();
+    while (ScriptValueP v = it->next()) {
+      double val = v->toDouble();
+      result.push_back(val);
+    }
+  }
+
+  return result;
+}
+
 // This version accepts:
-//   fields: [array of text fields]
+//   fields: [array of TextField]
 //   separator: string
+//   minHeights: [array of double]
 //   (optional) prefix, suffix, hide_when_empty, etc.
 
 SCRIPT_FUNCTION_WITH_DEP(combined_editor_array) {
   vector<TextValue*> values = readFieldArray(ctx);
   vector<String> separators = readRepeatedSeparators(ctx, values);
+  vector<double> minHeights = readMinHeightsArray(ctx);
   String value = removePrefixSuffix(ctx);
   vector<pair<String, bool>> value_parts = splitTheValue(value, values.size());
   updateValuesIfInputNewer(ctx, values, value_parts);
-  String new_value = recombineParts(ctx, value_parts, separators);
+  String new_value = recombineParts(ctx, value_parts, separators, minHeights);
   SCRIPT_RETURN(new_value);
 }
 
