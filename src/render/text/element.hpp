@@ -153,6 +153,8 @@ public:
   size_t start = String::npos, end = String::npos;
   size_t margin_end_char = 0; // end position of characters that are added to the margin (i.e. bullet points)
   double min_height = 0.0;
+  optional<Alignment> internal_valign;
+  bool min_height_closed = false;
 };
 
 /// A list of text elements extracted from a string

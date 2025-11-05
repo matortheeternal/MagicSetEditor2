@@ -126,8 +126,7 @@ static String handleEmpty(Context& ctx, vector<pair<String, bool>> &value_parts,
         + separators[value_parts.size() - 2]
         + _("</soft></sep>")
         + new_value.substr(after);
-    }
-    else {
+    } else {
       new_value += _("<suffix>") + suffix + _("</suffix>");
     }
   }
@@ -137,7 +136,7 @@ static String handleEmpty(Context& ctx, vector<pair<String, bool>> &value_parts,
   return new_value;
 }
 
-static String recombineParts(Context &ctx, vector<pair<String, bool>> &value_parts, vector<String> &separators, const vector<double>& minHeights = {}) {
+static String recombineParts(Context &ctx, vector<pair<String, bool>> &value_parts, vector<String> &separators, const vector<double>& min_heights = {}, String alignment = "") {
   SCRIPT_PARAM_DEFAULT(bool, hide_when_empty, false);
   SCRIPT_PARAM_DEFAULT(bool, soft_before_empty, false);
   String new_value = value_parts.front().first;
@@ -158,14 +157,9 @@ static String recombineParts(Context &ctx, vector<pair<String, bool>> &value_par
       new_value += _("<sep>") + separators[i - 1] + _("</sep>");
       new_value_empty = false;
     }
-    if (i < minHeights.size() && minHeights[i] > 0.0) {
-      new_value += String::Format(
-        _("<min-height:%g>%s</min-height>"),
-        minHeights[i],
-        value_parts[i].first.c_str()
-      );
-    }
-    else {
+    if (i < min_heights.size() && min_heights[i] > 0.0) {
+      new_value += String::Format(_("<min-height:%g:%s>%s</min-height>"), min_heights[i], alignment, value_parts[i].first);
+    } else {
       new_value += value_parts[i].first;
     }
   }
@@ -279,6 +273,14 @@ static vector<double> readMinHeightsArray(Context& ctx) {
   return result;
 }
 
+static String readAlignment(Context& ctx) {
+  String result = "middle left";
+  SCRIPT_OPTIONAL_PARAM(String, alignment) {
+    result = alignment;
+  }
+  return result;
+}
+
 // This version accepts:
 //   fields: [array of TextField]
 //   separator: string
@@ -289,10 +291,11 @@ SCRIPT_FUNCTION_WITH_DEP(combined_editor_array) {
   vector<TextValue*> values = readFieldArray(ctx);
   vector<String> separators = readRepeatedSeparators(ctx, values);
   vector<double> minHeights = readMinHeightsArray(ctx);
+  String alignment = readAlignment(ctx);
   String value = removePrefixSuffix(ctx);
   vector<pair<String, bool>> value_parts = splitTheValue(value, values.size());
   updateValuesIfInputNewer(ctx, values, value_parts);
-  String new_value = recombineParts(ctx, value_parts, separators, minHeights);
+  String new_value = recombineParts(ctx, value_parts, separators, minHeights, alignment);
   SCRIPT_RETURN(new_value);
 }
 

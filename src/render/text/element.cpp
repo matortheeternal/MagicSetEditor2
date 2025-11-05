@@ -199,18 +199,37 @@ private:
         } else if (is_tag(text, tag_start, _("</margin"))) {
           if (!margins.empty()) margins.pop_back();
         } else if (is_tag(text, tag_start, _("<min-height"))) {
-          size_t colon = text.find_first_of(_(">:"), tag_start);
-          if (colon < pos - 1 && text.GetChar(colon) == _(':')) {
+          size_t first_colon = text.find_first_of(_(">:"), tag_start);
+          if (first_colon < pos - 1 && text.GetChar(first_colon) == _(':')) {
+            String args = text.substr(first_colon + 1, pos - first_colon - 2);
+            args.Trim();
+
+            size_t second_colon = args.find(_(":"));
+            String height_str, valign_str;
+
+            if (second_colon != String::npos) {
+              height_str = args.substr(0, second_colon);
+              valign_str = args.substr(second_colon + 1);
+            } else {
+              height_str = args;
+              valign_str = _("middle");
+            }
+
             double h = 0.0;
-            String v = text.substr(colon + 1, pos - colon - 2);
-            v.ToDouble(&h);
-            if (!min_heights.empty()) h = std::max(h, min_heights.back());
+            height_str.ToDouble(&h);
             min_heights.push_back(h);
-            paragraphs.back().min_height = std::max(paragraphs.back().min_height, h);
+
+            TextParagraph& para = paragraphs.back();
+            para.min_height = std::max(para.min_height, h);
+
+            Alignment parsed_align = alignment_from_string(valign_str);
+            para.internal_valign = parsed_align;
           }
-        }
-        else if (is_tag(text, tag_start, _("</min-height"))) {
-          if (!min_heights.empty()) min_heights.pop_back();
+        } else if (is_tag(text, tag_start, _("</min-height"))) {
+          if (!min_heights.empty()) {
+            TextParagraph& para = paragraphs.back();
+            para.min_height_closed = true;
+          }
         } else if (is_tag(text, tag_start, _("<align"))) {
           size_t colon = text.find_first_of(_(">:"), tag_start);
           if (colon < pos - 1 && text.GetChar(colon) == _(':')) {
@@ -302,9 +321,6 @@ private:
         }
         if (!aligns.empty()) {
           paragraphs.back().alignment = aligns.back();
-        }
-        if (!min_heights.empty()) {
-          paragraphs.back().min_height = std::max(paragraphs.back().min_height, min_heights.back());
         }
       }
     }
