@@ -276,7 +276,8 @@ size_t TextViewer::firstVisibleChar(size_t index, int delta) const {
 
 double TextViewer::heightOfLastLine() const {
   if (lines.empty()) return 0;
-  return lines.back().line_height;
+  const Line& last_line = lines.back();
+  return last_line.margin_top + last_line.line_height + last_line.margin_bottom;
 }
 
 // ----------------------------------------------------------------------------- : Scrolling
@@ -287,15 +288,15 @@ size_t TextViewer::lineCount() const {
 size_t TextViewer::visibleLineCount(double height) const {
   size_t count = 0;
   FOR_EACH_CONST(l, lines) {
-    if (l.top + l.line_height > height) return count;
-    if (l.top >= 0) ++count;
+    if (l.bottom() > height) return count;
+    if (l.top - l.margin_top >= 0) ++count;
   }
   return count;
 }
 size_t TextViewer::firstVisibleLine() const {
   size_t i = 0;
   FOR_EACH_CONST(l, lines) {
-    if (l.top >= 0) return i;
+    if (l.top - l.margin_top >= 0) return i;
     i++;
   }
   return 0; //no visible lines
@@ -314,7 +315,7 @@ void TextViewer::scrollBy(double delta) {
 bool TextViewer::ensureVisible(double height, size_t char_id) {
   if (lines.empty()) return true;
   const Line& line = findLine(char_id);
-  if (line.top < 0) {
+  if (line.top - line.margin_top < 0) {
     // scroll up
     scrollBy(-line.top);
     return true;
@@ -711,13 +712,16 @@ bool TextViewer::prepareLinesAtScale(RotatedDC& dc, const vector<CharInfo>& char
       line.start = word_start;
       line.positions.clear();
       if (line.break_after == LineBreak::LINE) line.line_height = 0;
-      bool on_last_char = i == chars.size() - 1;
-      if (line.break_after >= LineBreak::HARD || on_last_char) {
+      if (line.break_after >= LineBreak::HARD) {
+        // end of paragraph
+        assert(elements.paragraphs[i_para].end == i + 1);
+        assert(i_para + 1 < elements.paragraphs.size());
+
         const TextParagraph& para = elements.paragraphs[i_para];
         if (para.min_height > 0.0) {
           startPara = para;
         }
-        if (line.break_after == LineBreak::LINE || on_last_char) {
+        if (line.break_after == LineBreak::LINE) {
           // enforce minimum height for paragraph 
           if (para.min_height_closed) {
             pair<double, double> deltas = computeVerticalDeltas(startPara, lines, current_para_start_line);
@@ -727,11 +731,6 @@ bool TextViewer::prepareLinesAtScale(RotatedDC& dc, const vector<CharInfo>& char
           }
           current_para_start_line = lines.size();
         }
-      }
-      if (line.break_after >= LineBreak::HARD) {
-        // end of paragraph
-        assert(elements.paragraphs[i_para].end == i + 1);
-        assert(i_para + 1 < elements.paragraphs.size());
 
         if (i_para + 1 < elements.paragraphs.size()) ++i_para;
         assert(elements.paragraphs[i_para].start == i + 1);
@@ -746,6 +745,7 @@ bool TextViewer::prepareLinesAtScale(RotatedDC& dc, const vector<CharInfo>& char
       line.positions.push_back(line_size.width); // start position
     }
   }
+
   // the last word
   FOR_EACH(p, positions_word) {
     line.positions.push_back(line_size.width + p);
@@ -760,6 +760,14 @@ bool TextViewer::prepareLinesAtScale(RotatedDC& dc, const vector<CharInfo>& char
   }
   line.end_or_soft = max(line.start, min(line.end_or_soft, line.end()));
   lines.push_back(line);
+  if (elements.paragraphs.size() > 0) {
+    const TextParagraph& para = elements.paragraphs[i_para];
+    if (startPara.min_height > 0.0 && para.min_height_closed) {
+      auto deltas = computeVerticalDeltas(startPara, lines, current_para_start_line);
+      if (deltas.first > 0.0) shiftLinesDown(lines, current_para_start_line, deltas.first);
+      if (deltas.second > 0.0) lines.back().margin_bottom = std::max(lines.back().margin_bottom, deltas.second);
+    }
+  }
   // does it fit vertically?
   if (style.paragraph_height > 0) {
     // height = max(paragraph_height) * paragraph_count
@@ -818,10 +826,10 @@ void TextViewer::alignParagraph(size_t start_line, size_t end_line, const vector
   double height = 0;
   for (size_t li = end_line - 1 ; li + 1 > start_line ; --li) {
     Line& l = lines[li];
-    height = l.top + l.line_height;
+    height = l.bottom();
     if (l.line_height) break; // not an empty line
   }
-  height -= lines[start_line].top;
+  height -= (lines[start_line].top - lines[start_line].margin_top);
   
   // stretch lines by increasing the space between them
   if (height < s.height) {
