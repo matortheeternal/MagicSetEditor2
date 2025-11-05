@@ -136,10 +136,17 @@ static String handleEmpty(Context& ctx, vector<pair<String, bool>> &value_parts,
   return new_value;
 }
 
+static String min_height_wrap(size_t index, const vector<double>& min_heights, String alignment, vector<pair<String, bool>>& value_parts) {
+  String value = value_parts[index].first;
+  if (index < min_heights.size() && min_heights[index] > 0.0)
+    return String::Format(_("<min-height:%g:%s>%s</min-height>"), min_heights[index], alignment, value);
+  return value;
+}
+
 static String recombineParts(Context &ctx, vector<pair<String, bool>> &value_parts, vector<String> &separators, const vector<double>& min_heights = {}, String alignment = "") {
   SCRIPT_PARAM_DEFAULT(bool, hide_when_empty, false);
   SCRIPT_PARAM_DEFAULT(bool, soft_before_empty, false);
-  String new_value = value_parts.front().first;
+  String new_value = min_height_wrap(0, min_heights, alignment, value_parts);
   bool   new_value_empty = value_parts.front().second;
   size_t size_before_last = 0;
   for (size_t i = 1; i < value_parts.size(); ++i) {
@@ -157,11 +164,7 @@ static String recombineParts(Context &ctx, vector<pair<String, bool>> &value_par
       new_value += _("<sep>") + separators[i - 1] + _("</sep>");
       new_value_empty = false;
     }
-    if (i < min_heights.size() && min_heights[i] > 0.0) {
-      new_value += String::Format(_("<min-height:%g:%s>%s</min-height>"), min_heights[i], alignment, value_parts[i].first);
-    } else {
-      new_value += value_parts[i].first;
-    }
+    new_value += min_height_wrap(i, min_heights, alignment, value_parts);
   }
   if (!new_value_empty || !hide_when_empty)
     new_value = handleEmpty(ctx, value_parts, separators, new_value, size_before_last);
