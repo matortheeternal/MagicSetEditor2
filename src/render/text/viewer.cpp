@@ -13,18 +13,18 @@
 // ----------------------------------------------------------------------------- : Line
 
 struct TextViewer::Line {
-  size_t         start;       ///< Index of the first character in this line
-  size_t         end_or_soft; ///< Index just beyond the last non-soft character
-  vector<double> positions;   ///< x position of each character in this line, gives the number of characters + 1, never empty
-  double         top;         ///< y position of (the top of) this line
-  double         line_height; ///< The height of this line in pixels
-  LineBreak      break_after; ///< Is there a saparator after this line?
+  size_t         start;          ///< Index of the first character in this line
+  size_t         end_or_soft;    ///< Index just beyond the last non-soft character
+  vector<double> positions;      ///< x position of each character in this line, gives the number of characters + 1, never empty
+  double         top;            ///< y position of (the top of) this line
+  double         line_height;    ///< The height of this line in pixels
+  LineBreak      break_after;    ///< Is there a saparator after this line?
   optional<Alignment> alignment; ///< Alignment of this line
-  bool           justifying;  ///< Is the text justified? Only true when *really* justifying.
-  double         margin_left; ///< Left margin
-  double         margin_right;///< Rightmargin
-  double         margin_top;
-  double         margin_bottom;
+  bool           justifying;     ///< Is the text justified? Only true when *really* justifying.
+  double         margin_left;    ///< Left   margin
+  double         margin_right;   ///< Right  margin
+  double         margin_top;     ///< Top    margin
+  double         margin_bottom;  ///< Bottom margin
   
   Line()
     : start(0), end_or_soft(0), top(0), line_height(0)
@@ -711,16 +711,13 @@ bool TextViewer::prepareLinesAtScale(RotatedDC& dc, const vector<CharInfo>& char
       line.start = word_start;
       line.positions.clear();
       if (line.break_after == LineBreak::LINE) line.line_height = 0;
-      if (line.break_after >= LineBreak::HARD) {
-        // end of paragraph
-        assert(elements.paragraphs[i_para].end == i + 1);
-        assert(i_para + 1 < elements.paragraphs.size());
-
+      bool on_last_char = i == chars.size() - 1;
+      if (line.break_after >= LineBreak::HARD || on_last_char) {
         const TextParagraph& para = elements.paragraphs[i_para];
         if (para.min_height > 0.0) {
           startPara = para;
         }
-        if (line.break_after == LineBreak::LINE) {
+        if (line.break_after == LineBreak::LINE || on_last_char) {
           // enforce minimum height for paragraph 
           if (para.min_height_closed) {
             pair<double, double> deltas = computeVerticalDeltas(startPara, lines, current_para_start_line);
@@ -730,6 +727,11 @@ bool TextViewer::prepareLinesAtScale(RotatedDC& dc, const vector<CharInfo>& char
           }
           current_para_start_line = lines.size();
         }
+      }
+      if (line.break_after >= LineBreak::HARD) {
+        // end of paragraph
+        assert(elements.paragraphs[i_para].end == i + 1);
+        assert(i_para + 1 < elements.paragraphs.size());
 
         if (i_para + 1 < elements.paragraphs.size()) ++i_para;
         assert(elements.paragraphs[i_para].start == i + 1);
