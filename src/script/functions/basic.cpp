@@ -718,6 +718,51 @@ SCRIPT_FUNCTION(list_pop) {
   return removedItem;
 }
 
+// map mutation
+SCRIPT_FUNCTION(add_key) {
+  SCRIPT_PARAM_C(ScriptValueP, input);
+  SCRIPT_PARAM(String, key);
+  SCRIPT_PARAM_C(ScriptValueP, value);
+
+  ScriptCustomCollection* c = dynamic_cast<ScriptCustomCollection*>(input.get());
+  if (!c) {
+    throw ScriptError(_("add_key: can only be used on script-created collections"));
+  }
+
+
+  if (c->key_value.find(key) != c->key_value.end()) {
+    throw ScriptError(_("add_key: key already present"));
+  }
+
+  c->key_value.emplace(std::move(key), value);
+  return input;
+}
+
+SCRIPT_FUNCTION(remove_key) {
+  SCRIPT_PARAM_C(ScriptValueP, input);
+  SCRIPT_PARAM(String, key);
+
+  ScriptCustomCollection* c = dynamic_cast<ScriptCustomCollection*>(input.get());
+  if (!c)
+    throw ScriptError(_("remove_key: can only be used on script-created collections"));
+
+  c->key_value.erase(key);
+  return input;
+}
+
+SCRIPT_FUNCTION(set_key) {
+  SCRIPT_PARAM_C(ScriptValueP, input);
+  SCRIPT_PARAM(String, key);
+  SCRIPT_PARAM_C(ScriptValueP, value);
+
+  ScriptCustomCollection* c = dynamic_cast<ScriptCustomCollection*>(input.get());
+  if (!c)
+    throw ScriptError(_("remove_key: can only be used on script-created collections"));
+
+  c->key_value[key] = value;
+  return input;
+}
+
 // filtering items from a list
 SCRIPT_FUNCTION(filter_list) {
   SCRIPT_PARAM_C(ScriptValueP, input);
@@ -1030,6 +1075,9 @@ void init_script_basic_functions(Context& ctx) {
   ctx.setVariable(_("list_remove"),          script_list_remove);
   ctx.setVariable(_("list_insert"),          script_list_insert);
   ctx.setVariable(_("list_pop"),             script_list_pop);
+  ctx.setVariable(_("add_key"),              script_add_key);
+  ctx.setVariable(_("remove_key"),           script_remove_key);
+  ctx.setVariable(_("set_key"),              script_set_key);
   ctx.setVariable(_("filter_list"),          script_filter_list);
   ctx.setVariable(_("sort_list"),            script_sort_list);
   ctx.setVariable(_("random_shuffle"),       script_random_shuffle);
