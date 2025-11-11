@@ -650,11 +650,11 @@ SCRIPT_FUNCTION(list_set) {
 
   ScriptCustomCollection* c = dynamic_cast<ScriptCustomCollection*>(input.get());
   if (!c) {
-    throw ScriptError(_("set: can only be used on script-created collections"));
+    throw ScriptError(_("list_set: can only be used on script-created collections"));
   }
 
   if (index < 0 || index >= (int)c->value.size()) {
-    throw ScriptError(_("set: index out of range"));
+    throw ScriptError(_("list_set: index out of range"));
   }
 
   c->value[index] = value;
@@ -669,11 +669,11 @@ SCRIPT_FUNCTION(list_insert) {
 
   ScriptCustomCollection* c = dynamic_cast<ScriptCustomCollection*>(input.get());
   if (!c) {
-    throw ScriptError(_("insert: can only be used on script-created collections"));
+    throw ScriptError(_("list_insert: can only be used on script-created collections"));
   }
 
   if (index < 0 || index >(int)c->value.size()) {
-    throw ScriptError(_("insert: index out of range"));
+    throw ScriptError(_("list_insert: index out of range"));
   }
 
   c->value.insert(c->value.begin() + index, value);
@@ -687,11 +687,11 @@ SCRIPT_FUNCTION(list_remove) {
 
   ScriptCustomCollection* c = dynamic_cast<ScriptCustomCollection*>(input.get());
   if (!c) {
-    throw ScriptError(_("remove: can only be used on script-created collections"));
+    throw ScriptError(_("list_remove: can only be used on script-created collections"));
   }
 
   if (index < 0 || index >= (int)c->value.size()) {
-    throw ScriptError(_("remove: index out of range"));
+    throw ScriptError(_("list_remove: index out of range"));
   }
 
   ScriptValueP removedItem = c->value[index];
@@ -705,12 +705,12 @@ SCRIPT_FUNCTION(list_pop) {
 
   ScriptCustomCollection* c = dynamic_cast<ScriptCustomCollection*>(input.get());
   if (!c) {
-    throw ScriptError(_("pop: can only be used on script-created collections"));
+    throw ScriptError(_("list_pop: can only be used on script-created collections"));
   }
 
   ScriptValueP removedItem = c->value.back();
   if (c->value.empty()) {
-    throw ScriptError(_("pop: cannot pop from an empty collection"));
+    throw ScriptError(_("list_pop: cannot pop from an empty collection"));
   }
 
   c->value.pop_back();
